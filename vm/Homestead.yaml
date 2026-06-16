@@ -1,0 +1,32 @@
+---
+ip: "192.168.56.56"
+memory: 4096
+cpus: 2
+provider: virtualbox
+
+folders:
+  - map: C:\Projects\My\otus_course\vm\application
+    to: /home/vagrant/application
+
+sites:
+  - map: application.local
+    to: /home/vagrant/application/public
+
+databases:
+  - application
+
+features:
+  - mariadb: false
+  - postgresql: false
+  - ohmyzsh: false
+  - webdriver: false
+
+services:
+  - enabled:
+      - "mysql"
+
+ports:
+  - send: 33060
+    to: 3306
+  - send: 8025
+    to: 8025
