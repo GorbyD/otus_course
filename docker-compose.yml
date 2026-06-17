@@ -22,9 +22,9 @@ services:
       - PG_USER=${POSTGRES_USER}
       - PG_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_HOST=redis
-      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PORT=6379
       - MEMCACHED_HOST=memcached
-      - MEMCACHED_PORT=${MEMCACHED_PORT}
+      - MEMCACHED_PORT=11211
     depends_on:
       - postgres
       - redis
@@ -32,8 +32,6 @@ services:
 
   postgres:
     image: postgres:17-alpine
-    ports:
-      - ${POSTGRES_PORT}:5432
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -43,13 +41,9 @@ services:
 
   redis:
     image: redis:7.4-alpine
-    ports:
-      - ${REDIS_PORT}:6379
 
   memcached:
     image: memcached:1.6-alpine
-    ports:
-      - ${MEMCACHED_PORT}:11211
 
 volumes:
   php-fpm-socket:
