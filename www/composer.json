@@ -1,0 +1,11 @@
+{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/GorbyD/otus-composer-package.git"
+    }
+  ],
+  "require": {
+    "denis/otus-util": "^1.0.0"
+  }
+}
