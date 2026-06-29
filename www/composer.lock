@@ -68,21 +68,21 @@
         },
         {
             "name": "denis/otus-util",
-            "version": "v1.0.2",
+            "version": "v1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/GorbyD/otus-composer-package.git",
-                "reference": "e849ab69bc9e5ecfef5e1ceb194f64a529123b93"
+                "reference": "f2a8f4ca43b686f4919886bd048ca8533b14e2a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GorbyD/otus-composer-package/zipball/e849ab69bc9e5ecfef5e1ceb194f64a529123b93",
-                "reference": "e849ab69bc9e5ecfef5e1ceb194f64a529123b93",
+                "url": "https://api.github.com/repos/GorbyD/otus-composer-package/zipball/f2a8f4ca43b686f4919886bd048ca8533b14e2a2",
+                "reference": "f2a8f4ca43b686f4919886bd048ca8533b14e2a2",
                 "shasum": ""
             },
             "require": {
                 "danielstjules/stringy": "^3.1",
-                "php": ">=8.0"
+                "php": ">=7.0"
             },
             "type": "library",
             "autoload": {
@@ -100,10 +100,10 @@
             ],
             "description": "Composer Feature Study",
             "support": {
-                "source": "https://github.com/GorbyD/otus-composer-package/tree/v1.0.2",
+                "source": "https://github.com/GorbyD/otus-composer-package/tree/v1.0.3",
                 "issues": "https://github.com/GorbyD/otus-composer-package/issues"
             },
-            "time": "2026-06-27T06:51:54+00:00"
+            "time": "2026-06-29T07:21:40+00:00"
         },
         {
             "name": "symfony/polyfill-mbstring",
