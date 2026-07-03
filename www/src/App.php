@@ -10,6 +10,7 @@ class App
 
         return match ($path) {
             '/bracket' => $this->bracket(),
+            '/checkemail' => $this->email(),
             '/whoami' => $this->whoami(),
             '/healthcheck' => $this->healthcheck(),
             default => $this->notFound(),
@@ -38,6 +39,39 @@ class App
             http_response_code(400);
             return 'Bad Request: ' . $e->getMessage() . "\n";
         }
+    }
+
+    private function email(): string
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            return "Method Not Allowed. Необходим POST /email с параметром 'emails' (список строк, каждая на новой строке).\n";
+        }
+
+        $raw = $_POST['emails'] ?? null;
+
+        if ($raw === null || trim($raw) === '') {
+            http_response_code(400);
+            return "Bad Request: необходим параметр 'emails' (список строк, каждая на новой строке).\n";
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $raw);
+        $results = (new EmailValidator())->validateList($lines);
+
+        if ($results === []) {
+            http_response_code(400);
+            return "Bad Request: список пуст.\n";
+        }
+
+        $output = [];
+        foreach ($results as $result) {
+            $output[] = $result['valid']
+                ? "OK: {$result['email']}"
+                : "NOT OK: {$result['email']} ({$result['reason']})";
+        }
+
+        http_response_code(200);
+        return implode("\n", $output) . "\n";
     }
 
     private function healthcheck(): string

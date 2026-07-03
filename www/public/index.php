@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/src/BracketValidator.php';
+require_once dirname(__DIR__) . '/src/EmailValidator.php';
 require_once dirname(__DIR__) . '/src/Session.php';
 require_once dirname(__DIR__) . '/src/App.php';
 
