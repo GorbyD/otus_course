@@ -55,7 +55,7 @@ class App
             return "Bad Request: необходим параметр 'emails' (список строк, каждая на новой строке).\n";
         }
 
-        $lines = preg_split('/\r\n|\r|\n/', $raw);
+        $lines = preg_split('/[\r\n,;]+/', $raw);
         $results = (new EmailValidator())->validateList($lines);
 
         if ($results === []) {
