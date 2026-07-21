@@ -13,6 +13,7 @@ class App
             '/checkemail' => $this->email(),
             '/whoami' => $this->whoami(),
             '/healthcheck' => $this->healthcheck(),
+            '/mergelist' => $this->mergeList(),
             default => $this->notFound(),
         };
     }
@@ -127,5 +128,40 @@ class App
     {
         http_response_code(404);
         return "Not Found\n";
+    }
+
+    private function mergeList(): string
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            return "Method Not Allowed. Необходим POST /mergelist с параметрами 'list1' и 'list2'.\n";
+        }
+
+        $raw1 = $_POST['list1'] ?? null;
+        $raw2 = $_POST['list2'] ?? null;
+
+        if ($raw1 === null || $raw2 === null) {
+            http_response_code(400);
+            return "Bad Request: необходимы параметры 'list1' и 'list2'.\n";
+        }
+
+        $parse = static function (string $raw): array {
+            $raw = trim($raw);
+            if ($raw === '') {
+                return [];
+            }
+            $result = explode(',', $raw);
+            $result = array_map(fn($i) => (int)$i, $result);
+            return $result;
+        };
+
+        $merger = new ListMerger();
+        $merged = $merger->mergeTwoLists(
+            $merger->fromArray($parse($raw1)),
+            $merger->fromArray($parse($raw2))
+        );
+
+        http_response_code(200);
+        return implode(',', $merger->toArray($merged)) . "\n";
     }
 }
