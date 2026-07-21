@@ -1,8 +1,6 @@
 <?php
 
-require_once dirname(__DIR__) . '/src/BracketValidator.php';
-require_once dirname(__DIR__) . '/src/Session.php';
-require_once dirname(__DIR__) . '/src/App.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 
