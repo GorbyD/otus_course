@@ -1,35 +1,82 @@
 services:
-  nginx:
+
+  # Балансировщик
+  nginx-lb:
     image: nginx:1.27-alpine
     ports:
-      - "8080:80"
+      - "80:80"
+    volumes:
+      - ./docker/nginx-lb/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - nginx-back1
+      - nginx-back2
+
+  # Back1
+  nginx-back1:
+    image: nginx:1.27-alpine
     volumes:
       - ./www:/var/www/html:ro
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
-      - php-fpm-socket:/run/php-fpm
+      - ./docker/nginx-backend/templates:/etc/nginx/templates:ro
+    environment:
+      PHP_FPM_HOST: php-fpm1
     depends_on:
-      - php-fpm
+      - php-fpm1
 
-  php-fpm:
+  php-fpm1:
     build:
       context: ./docker/php
     volumes:
-      - ./www:/var/www/html
-      - php-fpm-socket:/run/php-fpm
+      - ./www:/var/www/html:ro
     environment:
-      - PG_HOST=postgres
-      - PG_DB=${POSTGRES_DB}
-      - PG_USER=${POSTGRES_USER}
-      - PG_PASSWORD=${POSTGRES_PASSWORD}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - MEMCACHED_HOST=memcached
-      - MEMCACHED_PORT=11211
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      PG_HOST: postgres
+      PG_DB: ${POSTGRES_DB}
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
     depends_on:
       - postgres
       - redis
-      - memcached
 
+  # Back2
+  nginx-back2:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./www:/var/www/html:ro
+      - ./docker/nginx-backend/templates:/etc/nginx/templates:ro
+    environment:
+      PHP_FPM_HOST: php-fpm2
+    depends_on:
+      - php-fpm2
+
+  php-fpm2:
+    build:
+      context: ./docker/php
+    volumes:
+      - ./www:/var/www/html:ro
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      PG_HOST: postgres
+      PG_DB: ${POSTGRES_DB}
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
+    depends_on:
+      - postgres
+      - redis
+
+  # Redis
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --save 60 1 --dir /data # сохранять снапшот если за 60 с изменился хотя бы 1 ключ
+    volumes:
+      - redis-data:/data
+
+  # БД
   postgres:
     image: postgres:17-alpine
     environment:
@@ -39,11 +86,10 @@ services:
     volumes:
       - ./storage/postgres:/var/lib/postgresql/data
 
-  redis:
-    image: redis:7.4-alpine
+
 
   memcached:
     image: memcached:1.6-alpine
 
 volumes:
-  php-fpm-socket:
+  redis-data:

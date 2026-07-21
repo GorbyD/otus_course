@@ -1,0 +1,24 @@
+server {
+    listen 80 default_server;
+    server_name _;
+    root /var/www/html/public;
+    index index.php index.html;
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass            ${PHP_FPM_HOST}:9000;
+        fastcgi_index           index.php;
+        fastcgi_param           SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include                 fastcgi_params;
+        add_header X-Backend-Nginx $hostname always;
+    }
+}
