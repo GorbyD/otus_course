@@ -30,7 +30,6 @@ CREATE TABLE movie_attribute_values (
     value_date date,
     value_timestamp timestamp,
     value_integer bigint,
-    value_numeric numeric,
     value_float double precision,
     CHECK (num_nonnulls(
                    value_text,
@@ -38,7 +37,6 @@ CREATE TABLE movie_attribute_values (
                    value_date,
                    value_timestamp,
                    value_integer,
-                   value_numeric,
                    value_float) = 1
         ),
     CHECK (
@@ -105,7 +103,6 @@ SELECT m.title AS movie,
            WHEN 'date' THEN to_char(mav.value_date, 'YYYY-MM-DD')
            WHEN 'timestamp' THEN to_char(mav.value_timestamp, 'YYYY-MM-DD HH24:MI:SS')
            WHEN 'integer' THEN mav.value_integer::text
-           WHEN 'numeric' THEN mav.value_numeric::text
            WHEN 'float' THEN mav.value_float::text
        END AS value
 FROM movie_attribute_values mav
