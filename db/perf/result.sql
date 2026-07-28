@@ -34,3 +34,6 @@
 -- снятие плана
 \set stage_dir /db/perf/results/10m_optimized
 \ir explain.sql
+
+-- размеры
+\ir 5_sizes.sql
