@@ -1,0 +1,38 @@
+                                                                         QUERY PLAN                                                                          
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=1163.18..1191.88 rows=820 width=93) (actual time=3.171..7.475 rows=874 loops=1)
+   Group Key: m.id
+   Buffers: shared hit=666
+   ->  Sort  (cost=1163.18..1165.23 rows=820 width=49) (actual time=3.101..3.198 rows=935 loops=1)
+         Sort Key: m.id, h.name
+         Sort Method: quicksort  Memory: 90kB
+         Buffers: shared hit=666
+         ->  Hash Join  (cost=319.08..1123.50 rows=820 width=49) (actual time=2.114..2.885 rows=935 loops=1)
+               Hash Cond: (s.hall_id = h.id)
+               Buffers: shared hit=666
+               ->  Hash Join  (cost=313.70..1115.91 rows=820 width=48) (actual time=2.064..2.721 rows=935 loops=1)
+                     Hash Cond: (s.movie_id = m.id)
+                     Buffers: shared hit=664
+                     ->  Bitmap Heap Scan on sessions s  (cost=16.70..816.76 rows=820 width=27) (actual time=0.145..0.609 rows=935 loops=1)
+                           Recheck Cond: ((start_time >= CURRENT_DATE) AND (start_time < (CURRENT_DATE + '1 day'::interval)))
+                           Heap Blocks: exact=544
+                           Buffers: shared hit=547
+                           ->  Bitmap Index Scan on idx_sessions_start_time  (cost=0.00..16.50 rows=820 width=0) (actual time=0.101..0.101 rows=935 loops=1)
+                                 Index Cond: ((start_time >= CURRENT_DATE) AND (start_time < (CURRENT_DATE + '1 day'::interval)))
+                                 Buffers: shared hit=3
+                     ->  Hash  (cost=197.00..197.00 rows=8000 width=29) (actual time=1.879..1.880 rows=8000 loops=1)
+                           Buckets: 8192  Batches: 1  Memory Usage: 546kB
+                           Buffers: shared hit=117
+                           ->  Seq Scan on movies m  (cost=0.00..197.00 rows=8000 width=29) (actual time=0.004..0.733 rows=8000 loops=1)
+                                 Buffers: shared hit=117
+               ->  Hash  (cost=3.50..3.50 rows=150 width=17) (actual time=0.039..0.039 rows=150 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 17kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on halls h  (cost=0.00..3.50 rows=150 width=17) (actual time=0.008..0.016 rows=150 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=80
+ Planning Time: 1.066 ms
+ Execution Time: 7.904 ms
+(34 rows)
+

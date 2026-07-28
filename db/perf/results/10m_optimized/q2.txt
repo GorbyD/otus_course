@@ -1,0 +1,20 @@
+                                                                                     QUERY PLAN                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=5945.00..5945.01 rows=1 width=8) (actual time=12.050..14.171 rows=1 loops=1)
+   Buffers: shared hit=581 read=270
+   ->  Gather  (cost=5944.79..5945.00 rows=2 width=8) (actual time=11.928..14.167 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=581 read=270
+         ->  Partial Aggregate  (cost=4944.79..4944.80 rows=1 width=8) (actual time=9.065..9.065 rows=1 loops=3)
+               Buffers: shared hit=581 read=270
+               ->  Parallel Index Only Scan using idx_tickets_purchased_at_sold on tickets  (cost=0.44..4627.05 rows=127093 width=0) (actual time=0.085..5.640 rows=102221 loops=3)
+                     Index Cond: (purchased_at >= (now() - '7 days'::interval))
+                     Heap Fetches: 0
+                     Buffers: shared hit=581 read=270
+ Planning:
+   Buffers: shared hit=71 read=2
+ Planning Time: 0.534 ms
+ Execution Time: 14.211 ms
+(16 rows)
+

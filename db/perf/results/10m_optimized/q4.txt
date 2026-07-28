@@ -1,0 +1,61 @@
+                                                                                             QUERY PLAN                                                                                              
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=153344.07..153344.08 rows=3 width=58) (actual time=398.097..408.763 rows=1 loops=1)
+   Buffers: shared hit=2881 read=89522 written=12379
+   ->  Sort  (cost=153344.07..153364.07 rows=8000 width=58) (actual time=383.303..393.968 rows=1 loops=1)
+         Sort Key: (sum(t.price)) DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=2881 read=89522 written=12379
+         ->  Finalize GroupAggregate  (cost=151153.88..153240.67 rows=8000 width=58) (actual time=383.291..393.956 rows=1 loops=1)
+               Group Key: m.id
+               Buffers: shared hit=2881 read=89522 written=12379
+               ->  Gather Merge  (cost=151153.88..153020.67 rows=16000 width=58) (actual time=383.275..393.939 rows=3 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     Buffers: shared hit=2881 read=89522 written=12379
+                     ->  Sort  (cost=150153.85..150173.85 rows=8000 width=58) (actual time=368.815..368.818 rows=1 loops=3)
+                           Sort Key: m.id
+                           Sort Method: quicksort  Memory: 25kB
+                           Buffers: shared hit=2881 read=89522 written=12379
+                           Worker 0:  Sort Method: quicksort  Memory: 25kB
+                           Worker 1:  Sort Method: quicksort  Memory: 25kB
+                           ->  Partial HashAggregate  (cost=149535.22..149635.22 rows=8000 width=58) (actual time=368.732..368.780 rows=1 loops=3)
+                                 Group Key: m.id
+                                 Batches: 1  Memory Usage: 409kB
+                                 Buffers: shared hit=2865 read=89522 written=12379
+                                 Worker 0:  Batches: 1  Memory Usage: 409kB
+                                 Worker 1:  Batches: 1  Memory Usage: 409kB
+                                 ->  Hash Join  (cost=6277.38..148899.76 rows=127093 width=33) (actual time=33.308..354.127 rows=102221 loops=3)
+                                       Hash Cond: (s.movie_id = m.id)
+                                       Buffers: shared hit=2865 read=89522 written=12379
+                                       ->  Hash Join  (cost=5980.38..148268.96 rows=127093 width=15) (actual time=23.236..331.096 rows=102221 loops=3)
+                                             Hash Cond: (t.session_id = s.id)
+                                             Buffers: shared hit=2514 read=89522 written=12379
+                                             ->  Parallel Bitmap Heap Scan on tickets t  (cost=3432.38..145387.32 rows=127093 width=15) (actual time=8.716..299.887 rows=102221 loops=3)
+                                                   Recheck Cond: ((purchased_at >= (now() - '7 days'::interval)) AND ((status)::text = 'sold'::text))
+                                                   Rows Removed by Index Recheck: 1025396
+                                                   Heap Blocks: exact=18992 lossy=11234
+                                                   Buffers: shared hit=270 read=89522 written=12379
+                                                   ->  Bitmap Index Scan on idx_tickets_purchased_at_sold  (cost=0.00..3356.12 rows=305024 width=0) (actual time=18.887..18.888 rows=306663 loops=1)
+                                                         Index Cond: (purchased_at >= (now() - '7 days'::interval))
+                                                         Buffers: shared hit=270
+                                             ->  Hash  (cost=1548.00..1548.00 rows=80000 width=16) (actual time=14.171..14.171 rows=80000 loops=3)
+                                                   Buckets: 131072  Batches: 1  Memory Usage: 4774kB
+                                                   Buffers: shared hit=2244
+                                                   ->  Seq Scan on sessions s  (cost=0.00..1548.00 rows=80000 width=16) (actual time=0.025..5.197 rows=80000 loops=3)
+                                                         Buffers: shared hit=2244
+                                       ->  Hash  (cost=197.00..197.00 rows=8000 width=26) (actual time=10.031..10.032 rows=8000 loops=3)
+                                             Buckets: 8192  Batches: 1  Memory Usage: 524kB
+                                             Buffers: shared hit=351
+                                             ->  Seq Scan on movies m  (cost=0.00..197.00 rows=8000 width=26) (actual time=8.461..9.127 rows=8000 loops=3)
+                                                   Buffers: shared hit=351
+ Planning:
+   Buffers: shared hit=52
+ Planning Time: 0.716 ms
+ JIT:
+   Functions: 82
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 3.914 ms (Deform 1.303 ms), Inlining 0.000 ms, Optimization 1.805 ms, Emission 38.510 ms, Total 44.229 ms
+ Execution Time: 426.083 ms
+(57 rows)
+
