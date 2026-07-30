@@ -27,6 +27,7 @@ services:
       context: ./docker/php
     volumes:
       - ./www:/var/www/html:ro
+      - ./db:/db:ro
     environment:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
@@ -36,9 +37,13 @@ services:
       PG_PASSWORD: ${POSTGRES_PASSWORD}
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
+      ES_HOST: ${ES_HOST}
+      ES_PORT: ${ES_PORT}
+      ES_INDEX: ${ES_INDEX}
     depends_on:
       - postgres
       - redis
+      - elasticsearch
 
   # Back2
   nginx-back2:
@@ -56,6 +61,7 @@ services:
       context: ./docker/php
     volumes:
       - ./www:/var/www/html:ro
+      - ./db:/db:ro
     environment:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
@@ -65,9 +71,13 @@ services:
       PG_PASSWORD: ${POSTGRES_PASSWORD}
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
+      ES_HOST: ${ES_HOST}
+      ES_PORT: ${ES_PORT}
+      ES_INDEX: ${ES_INDEX}
     depends_on:
       - postgres
       - redis
+      - elasticsearch
 
   # Redis
   redis:
@@ -91,5 +101,15 @@ services:
   memcached:
     image: memcached:1.6-alpine
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
 volumes:
   redis-data:
+  es-data:

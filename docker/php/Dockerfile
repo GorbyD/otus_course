@@ -7,9 +7,13 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     libz-dev \
     libssl-dev \
+    libzip-dev \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_pgsql
+
+RUN docker-php-ext-install zip
 
 RUN pecl install redis && docker-php-ext-enable redis
 
