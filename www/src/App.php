@@ -1,5 +1,9 @@
 <?php
 
+use Events\Event;
+use Events\RedisClientFactory;
+use Events\RedisEventRepository;
+
 class App
 {
     public function run(): string
@@ -14,6 +18,8 @@ class App
             '/whoami' => $this->whoami(),
             '/healthcheck' => $this->healthcheck(),
             '/mergelist' => $this->mergeList(),
+            '/events' => $this->events(),
+            '/events/match' => $this->eventsMatch(),
             default => $this->notFound(),
         };
     }
@@ -128,6 +134,100 @@ class App
     {
         http_response_code(404);
         return "Not Found\n";
+    }
+
+    private function events(): string
+    {
+        return match ($_SERVER['REQUEST_METHOD']) {
+            'POST' => $this->addEvent(),
+            'DELETE' => $this->clearEvents(),
+            default => $this->methodNotAllowed('POST, DELETE'),
+        };
+    }
+
+    /**
+     * POST /events
+     * Тело запроса (JSON): {"priority": 1000, "conditions": {"param1": "1"}, "event": {...}}
+     */
+    private function addEvent(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $data = json_decode((string) file_get_contents('php://input'), true);
+
+        if (!is_array($data) || !isset($data['priority'], $data['conditions'], $data['event']) || !is_array($data['conditions'])) {
+            http_response_code(400);
+            return json_encode(['error' => "Ожидается JSON вида {priority, conditions, event}"], JSON_UNESCAPED_UNICODE) . "\n";
+        }
+
+        $conditions = [];
+        foreach ($data['conditions'] as $param => $value) {
+            $conditions[(string) $param] = (string) $value;
+        }
+
+        $repository = new RedisEventRepository(RedisClientFactory::createFromEnv());
+        $event = $repository->add(new Event(
+            id: null,
+            priority: (int) $data['priority'],
+            conditions: $conditions,
+            payload: $data['event'],
+        ));
+
+        http_response_code(201);
+        return json_encode(['id' => $event->id, 'priority' => $event->priority], JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    /**
+     * DELETE /events — очищает всё хранилище событий.
+     */
+    private function clearEvents(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $repository = new RedisEventRepository(RedisClientFactory::createFromEnv());
+        $repository->clear();
+
+        http_response_code(200);
+        return json_encode(['status' => 'cleared'], JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    /**
+     * GET /events/match?param1=1&param2=2
+     */
+    private function eventsMatch(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            return $this->methodNotAllowed('GET');
+        }
+
+        $params = [];
+        foreach ($_GET as $param => $value) {
+            $params[(string) $param] = (string) $value;
+        }
+
+        $repository = new RedisEventRepository(RedisClientFactory::createFromEnv());
+        $event = $repository->findBestMatch($params);
+
+        if ($event === null) {
+            http_response_code(404);
+            return json_encode(['error' => 'Подходящих событий не найдено'], JSON_UNESCAPED_UNICODE) . "\n";
+        }
+
+        http_response_code(200);
+        return json_encode([
+            'id' => $event->id,
+            'priority' => $event->priority,
+            'event' => $event->payload,
+        ], JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    private function methodNotAllowed(string $allowed): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(405);
+        return json_encode(['error' => "Method Not Allowed. Допустимо: {$allowed}"], JSON_UNESCAPED_UNICODE) . "\n";
     }
 
     private function mergeList(): string
