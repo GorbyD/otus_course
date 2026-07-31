@@ -118,5 +118,83 @@ final class ElasticsearchBookSearchRepository
     }
 
 
+    /**
+     * @return BookHit[]
+     */
+    public function search(SearchCriteria $criteria): array
+    {
+        $must = [];
+        $filter = [];
 
+        if ($criteria->query !== null && $criteria->query !== '') {
+            $must[] = [
+                'match' => [
+                    'title' => [
+                        'query' => $criteria->query,
+                        'fuzziness' => 'AUTO',
+                        'operator' => 'or',
+                    ],
+                ],
+            ];
+        } else {
+            $must[] = ['match_all' => new \stdClass()];
+        }
+
+        if ($criteria->category !== null && $criteria->category !== '') {
+            $filter[] = [
+                'match' => [
+                    'category' => $criteria->category,
+                ],
+            ];
+        }
+
+        if ($criteria->maxPrice !== null) {
+            $filter[] = [
+                'range' => [
+                    'price' => ['lte' => $criteria->maxPrice],
+                ],
+            ];
+        }
+
+        if ($criteria->inStockOnly) {
+            $filter[] = [
+                'nested' => [
+                    'path' => 'stock',
+                    'query' => [
+                        'range' => ['stock.stock' => ['gt' => 0]],
+                    ],
+                ],
+            ];
+        }
+
+        $response = $this->client->search([
+            'index' => $this->index,
+            'body' => [
+                'size' => $criteria->limit,
+                'query' => [
+                    'bool' => [
+                        'must' => $must,
+                        'filter' => $filter,
+                    ],
+                ],
+            ],
+        ])->asArray();
+
+        $hits = [];
+        foreach ($response['hits']['hits'] ?? [] as $hit) {
+            $source = $hit['_source'];
+            $totalStock = array_sum(array_column($source['stock'] ?? [], 'stock'));
+
+            $hits[] = new BookHit(
+                sku: $source['sku'],
+                title: $source['title'],
+                category: $source['category'],
+                price: (int) $source['price'],
+                totalStock: (int) $totalStock,
+                score: (float) ($hit['_score'] ?? 0.0),
+            );
+        }
+
+        return $hits;
+    }
 }
