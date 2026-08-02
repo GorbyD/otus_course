@@ -25,7 +25,13 @@ $criteria = new SearchCriteria(
 
 $index = getenv('ES_INDEX');
 $repository = new ElasticsearchBookSearchRepository(EsClientFactory::createFromEnv(), $index);
-$hits = $repository->search($criteria);
+
+try {
+    $hits = $repository->search($criteria);
+} catch (\Throwable $e) {
+    fwrite(STDERR, 'Ошибка: ' . $e->getMessage() . "\n");
+    exit(1);
+}
 
 if ($hits === []) {
     echo "Ничего не найдено.\n";

@@ -19,41 +19,45 @@ final class ElasticsearchBookSearchRepository
      */
     public function createIndex(bool $recreate = false): void
     {
-        $exists = $this->client->indices()->exists(['index' => $this->index])->asBool();
+        try {
+            $exists = $this->client->indices()->exists(['index' => $this->index])->asBool();
 
-        if ($exists) {
-            if (!$recreate) {
-                return;
+            if ($exists) {
+                if (!$recreate) {
+                    return;
+                }
+                $this->client->indices()->delete(['index' => $this->index]);
             }
-            $this->client->indices()->delete(['index' => $this->index]);
-        }
 
-        $this->client->indices()->create([
-            'index' => $this->index,
-            'body' => [
-                'mappings' => [
-                    'properties' => [
-                        'title' => [
-                            'type' => 'text',
-                            'analyzer' => 'russian',
-                        ],
-                        'sku' => ['type' => 'keyword'],
-                        'category' => [
-                            'type' => 'text',
-                            'analyzer' => 'russian',
-                        ],
-                        'price' => ['type' => 'integer'],
-                        'stock' => [
-                            'type' => 'nested',
-                            'properties' => [
-                                'shop' => ['type' => 'keyword'],
-                                'stock' => ['type' => 'integer'],
+            $this->client->indices()->create([
+                'index' => $this->index,
+                'body' => [
+                    'mappings' => [
+                        'properties' => [
+                            'title' => [
+                                'type' => 'text',
+                                'analyzer' => 'russian',
+                            ],
+                            'sku' => ['type' => 'keyword'],
+                            'category' => ['type' => 'keyword'],
+                            'price' => ['type' => 'integer'],
+                            'stock' => [
+                                'type' => 'nested',
+                                'properties' => [
+                                    'shop' => ['type' => 'keyword'],
+                                    'stock' => ['type' => 'integer'],
+                                ],
                             ],
                         ],
                     ],
                 ],
-            ],
-        ]);
+            ]);
+        } catch (\Throwable $e) {
+            throw new SearchException(
+                "Не удалось создать индекс '{$this->index}' в Elasticsearch: {$e->getMessage()}",
+                previous: $e,
+            );
+        }
     }
 
     /**
@@ -100,7 +104,14 @@ final class ElasticsearchBookSearchRepository
 
     private function flushBulk(array $body, int $indexed, array $errors): array
     {
-        $response = $this->client->bulk(['index' => $this->index, 'body' => $body])->asArray();
+        try {
+            $response = $this->client->bulk(['index' => $this->index, 'body' => $body])->asArray();
+        } catch (\Throwable $e) {
+            throw new SearchException(
+                "Ошибка при загрузке данных в Elasticsearch: {$e->getMessage()}",
+                previous: $e,
+            );
+        }
 
         foreach ($response['items'] ?? [] as $item) {
             $action = $item['create'] ?? $item['index'] ?? null;
@@ -142,7 +153,7 @@ final class ElasticsearchBookSearchRepository
 
         if ($criteria->category !== null && $criteria->category !== '') {
             $filter[] = [
-                'match' => [
+                'term' => [
                     'category' => $criteria->category,
                 ],
             ];
@@ -167,18 +178,25 @@ final class ElasticsearchBookSearchRepository
             ];
         }
 
-        $response = $this->client->search([
-            'index' => $this->index,
-            'body' => [
-                'size' => $criteria->limit,
-                'query' => [
-                    'bool' => [
-                        'must' => $must,
-                        'filter' => $filter,
+        try {
+            $response = $this->client->search([
+                'index' => $this->index,
+                'body' => [
+                    'size' => $criteria->limit,
+                    'query' => [
+                        'bool' => [
+                            'must' => $must,
+                            'filter' => $filter,
+                        ],
                     ],
                 ],
-            ],
-        ])->asArray();
+            ])->asArray();
+        } catch (\Throwable $e) {
+            throw new SearchException(
+                "Ошибка при выполнении поиска в Elasticsearch: {$e->getMessage()}",
+                previous: $e,
+            );
+        }
 
         $hits = [];
         foreach ($response['hits']['hits'] ?? [] as $hit) {

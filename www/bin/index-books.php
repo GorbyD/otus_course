@@ -19,8 +19,14 @@ if ($file === null || !is_file($file)) {
 
 $index = getenv('ES_INDEX');
 $repository = new ElasticsearchBookSearchRepository(EsClientFactory::createFromEnv(), $index);
-$repository->createIndex(recreate: isset($options['recreate']));
-$result = $repository->bulkIndexFromFile($file);
+
+try {
+    $repository->createIndex(recreate: isset($options['recreate']));
+    $result = $repository->bulkIndexFromFile($file);
+} catch (\Throwable $e) {
+    fwrite(STDERR, 'Ошибка: ' . $e->getMessage() . "\n");
+    exit(1);
+}
 
 echo "Проиндексировано документов: {$result['indexed']}\n";
 if ($result['errors'] !== []) {
