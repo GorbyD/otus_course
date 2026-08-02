@@ -1,10 +1,10 @@
  schemaname |   table_name    |      index_name      | idx_scan 
 ------------+-----------------+----------------------+----------
- public     | sessions        | sessions_pkey        |     9503
- public     | seats           | seats_pkey           |     8000
- public     | customers       | customers_pkey       |     8000
- public     | seat_categories | seat_categories_pkey |     2009
- public     | halls           | halls_pkey           |     1006
+ public     | sessions        | sessions_pkey        |  9190000
+ public     | seats           | seats_pkey           |  8950000
+ public     | customers       | customers_pkey       |  8950000
+ public     | seat_categories | seat_categories_pkey |   252000
+ public     | movies          | movies_pkey          |    96000
 (5 rows)
 
  schemaname |       table_name       |              index_name              | idx_scan 

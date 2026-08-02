@@ -1,19 +1,19 @@
-                   object_name                   | object_type |  size  | size_bytes 
--------------------------------------------------+-------------+--------+------------
- public.tickets                                  | table       | 664 kB |     679936
- public.customers                                | table       | 328 kB |     335872
- public.customers_email_key                      | index       | 240 kB |     245760
- public.tickets_pkey                             | index       | 192 kB |     196608
- public.idx_tickets_customer_id                  | index       | 168 kB |     172032
- public.customers_pkey                           | index       | 88 kB  |      90112
- public.idx_tickets_seat_id                      | index       | 88 kB  |      90112
- public.idx_tickets_session_id                   | index       | 80 kB  |      81920
- public.session_seat_prices                      | table       | 80 kB  |      81920
- public.session_seat_prices_pkey                 | index       | 64 kB  |      65536
- public.sessions                                 | table       | 40 kB  |      40960
- public.seats_pkey                               | index       | 32 kB  |      32768
- public.movie_genres_pkey                        | index       | 32 kB  |      32768
- public.sessions_pkey                            | index       | 32 kB  |      32768
- public.seats_hall_id_row_number_seat_number_key | index       | 32 kB  |      32768
+             object_name              | object_type |  size   | size_bytes 
+--------------------------------------+-------------+---------+------------
+ public.tickets                       | table       | 725 MB  |  760274944
+ public.tickets_pkey                  | index       | 192 MB  |  201048064
+ public.idx_tickets_customer_id       | index       | 95 MB   |   99393536
+ public.customers                     | table       | 76 MB   |   79478784
+ public.idx_tickets_session_status    | index       | 60 MB   |   63102976
+ public.idx_tickets_purchased_at_sold | index       | 59 MB   |   62267392
+ public.customers_email_key           | index       | 59 MB   |   61636608
+ public.idx_tickets_seat_id           | index       | 55 MB   |   57991168
+ public.idx_tickets_session_id        | index       | 55 MB   |   57671680
+ public.customers_pkey                | index       | 15 MB   |   15745024
+ public.session_seat_prices           | table       | 12 MB   |   12525568
+ public.session_seat_prices_pkey      | index       | 7400 kB |    7577600
+ public.sessions                      | table       | 5984 kB |    6127616
+ public.sessions_pkey                 | index       | 1768 kB |    1810432
+ public.idx_sessions_movie_id         | index       | 1056 kB |    1081344
 (15 rows)
 
