@@ -1,0 +1,35 @@
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=2897.30..2927.65 rows=867 width=93) (actual time=8.831..11.420 rows=874 loops=1)
+   Group Key: m.id
+   Buffers: shared hit=876
+   ->  Sort  (cost=2897.30..2899.47 rows=867 width=49) (actual time=8.692..8.761 rows=935 loops=1)
+         Sort Key: m.id, h.name
+         Sort Method: quicksort  Memory: 90kB
+         Buffers: shared hit=873
+         ->  Hash Join  (cost=302.38..2854.99 rows=867 width=49) (actual time=1.922..8.359 rows=935 loops=1)
+               Hash Cond: (s.hall_id = h.id)
+               Buffers: shared hit=867
+               ->  Hash Join  (cost=297.00..2847.28 rows=867 width=48) (actual time=1.873..8.177 rows=935 loops=1)
+                     Hash Cond: (s.movie_id = m.id)
+                     Buffers: shared hit=865
+                     ->  Seq Scan on sessions s  (cost=0.00..2548.00 rows=867 width=27) (actual time=0.007..6.039 rows=935 loops=1)
+                           Filter: ((start_time >= CURRENT_DATE) AND (start_time < (CURRENT_DATE + '1 day'::interval)))
+                           Rows Removed by Filter: 79065
+                           Buffers: shared hit=748
+                     ->  Hash  (cost=197.00..197.00 rows=8000 width=29) (actual time=1.831..1.832 rows=8000 loops=1)
+                           Buckets: 8192  Batches: 1  Memory Usage: 546kB
+                           Buffers: shared hit=117
+                           ->  Seq Scan on movies m  (cost=0.00..197.00 rows=8000 width=29) (actual time=0.003..0.785 rows=8000 loops=1)
+                                 Buffers: shared hit=117
+               ->  Hash  (cost=3.50..3.50 rows=150 width=17) (actual time=0.038..0.038 rows=150 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 17kB
+                     Buffers: shared hit=2
+                     ->  Seq Scan on halls h  (cost=0.00..3.50 rows=150 width=17) (actual time=0.006..0.015 rows=150 loops=1)
+                           Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=91 read=8
+ Planning Time: 0.950 ms
+ Execution Time: 11.662 ms
+(31 rows)
+

@@ -1,0 +1,14 @@
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=243.66..243.67 rows=1 width=8) (actual time=1.438..1.439 rows=1 loops=1)
+   Buffers: shared hit=83
+   ->  Seq Scan on tickets  (cost=0.00..243.00 rows=264 width=0) (actual time=0.016..1.426 rows=263 loops=1)
+         Filter: (((status)::text = 'sold'::text) AND (purchased_at >= (now() - '7 days'::interval)))
+         Rows Removed by Filter: 7737
+         Buffers: shared hit=83
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.145 ms
+ Execution Time: 1.454 ms
+(10 rows)
+

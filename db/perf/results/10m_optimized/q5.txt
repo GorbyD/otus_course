@@ -1,0 +1,43 @@
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=116.31..116.51 rows=80 width=43) (actual time=0.190..0.193 rows=80 loops=1)
+   Sort Key: st.row_number, st.seat_number
+   Sort Method: quicksort  Memory: 27kB
+   Buffers: shared hit=14 read=8
+   ->  Nested Loop Left Join  (cost=5.77..113.78 rows=80 width=43) (actual time=0.107..0.149 rows=80 loops=1)
+         Join Filter: (t.seat_id = st.id)
+         Buffers: shared hit=11 read=8
+         ->  Nested Loop  (cost=5.34..108.12 rows=80 width=27) (actual time=0.080..0.111 rows=80 loops=1)
+               Buffers: shared hit=11 read=5
+               ->  Nested Loop  (cost=5.20..105.75 rows=80 width=28) (actual time=0.067..0.077 rows=80 loops=1)
+                     Buffers: shared hit=5 read=5
+                     ->  Index Scan using sessions_pkey on sessions se  (cost=0.29..8.31 rows=1 width=16) (actual time=0.043..0.043 rows=1 loops=1)
+                           Index Cond: (id = 11860)
+                           Buffers: shared hit=4 read=2
+                     ->  Bitmap Heap Scan on seats st  (cost=4.90..96.64 rows=80 width=28) (actual time=0.021..0.025 rows=80 loops=1)
+                           Recheck Cond: (hall_id = se.hall_id)
+                           Heap Blocks: exact=1
+                           Buffers: shared hit=1 read=3
+                           ->  Bitmap Index Scan on seats_hall_id_row_number_seat_number_key  (cost=0.00..4.88 rows=80 width=0) (actual time=0.010..0.011 rows=80 loops=1)
+                                 Index Cond: (hall_id = se.hall_id)
+                                 Buffers: shared hit=1 read=2
+               ->  Memoize  (cost=0.14..0.16 rows=1 width=15) (actual time=0.000..0.000 rows=1 loops=80)
+                     Cache Key: st.seat_category_id
+                     Cache Mode: logical
+                     Hits: 77  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                     Buffers: shared hit=6
+                     ->  Index Scan using seat_categories_pkey on seat_categories sc  (cost=0.13..0.15 rows=1 width=15) (actual time=0.004..0.004 rows=1 loops=3)
+                           Index Cond: (id = st.seat_category_id)
+                           Buffers: shared hit=6
+         ->  Materialize  (cost=0.43..4.46 rows=1 width=24) (actual time=0.000..0.000 rows=0 loops=80)
+               Buffers: shared read=3
+               ->  Index Scan using idx_tickets_session_id on tickets t  (cost=0.43..4.46 rows=1 width=24) (actual time=0.021..0.021 rows=0 loops=1)
+                     Index Cond: (session_id = 11860)
+                     Filter: ((status)::text = 'sold'::text)
+                     Buffers: shared read=3
+ Planning:
+   Buffers: shared hit=165 read=30 dirtied=2
+ Planning Time: 1.937 ms
+ Execution Time: 0.325 ms
+(39 rows)
+

@@ -1,0 +1,18 @@
+ schemaname |   table_name    |      index_name      | idx_scan 
+------------+-----------------+----------------------+----------
+ public     | sessions        | sessions_pkey        |  9190000
+ public     | seats           | seats_pkey           |  8950000
+ public     | customers       | customers_pkey       |  8950000
+ public     | seat_categories | seat_categories_pkey |   252000
+ public     | movies          | movies_pkey          |    96000
+(5 rows)
+
+ schemaname |       table_name       |              index_name              | idx_scan 
+------------+------------------------+--------------------------------------+----------
+ public     | customers              | customers_email_key                  |        0
+ public     | genres                 | genres_name_key                      |        0
+ public     | halls                  | halls_cinema_id_name_key             |        0
+ public     | movie_attribute_values | idx_movie_attribute_values_attribute |        0
+ public     | movie_attribute_values | idx_movie_attribute_values_date      |        0
+(5 rows)
+

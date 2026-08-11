@@ -1,0 +1,24 @@
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=2568.75..2796.40 rows=867 width=31) (actual time=8.613..10.183 rows=874 loops=1)
+   Hash Cond: (movies.id = sessions.movie_id)
+   Buffers: shared hit=1 read=864 written=44
+   ->  Seq Scan on movies  (cost=0.00..197.00 rows=8000 width=31) (actual time=0.013..0.949 rows=8000 loops=1)
+         Buffers: shared read=117 written=17
+   ->  Hash  (cost=2558.43..2558.43 rows=826 width=8) (actual time=8.585..8.586 rows=874 loops=1)
+         Buckets: 1024  Batches: 1  Memory Usage: 43kB
+         Buffers: shared hit=1 read=747 written=27
+         ->  HashAggregate  (cost=2550.17..2558.43 rows=826 width=8) (actual time=8.449..8.500 rows=874 loops=1)
+               Group Key: sessions.movie_id
+               Batches: 1  Memory Usage: 105kB
+               Buffers: shared hit=1 read=747 written=27
+               ->  Seq Scan on sessions  (cost=0.00..2548.00 rows=867 width=8) (actual time=0.012..8.246 rows=935 loops=1)
+                     Filter: ((start_time >= CURRENT_DATE) AND (start_time < (CURRENT_DATE + '1 day'::interval)))
+                     Rows Removed by Filter: 79065
+                     Buffers: shared hit=1 read=747 written=27
+ Planning:
+   Buffers: shared hit=218 read=17
+ Planning Time: 1.787 ms
+ Execution Time: 10.350 ms
+(20 rows)
+

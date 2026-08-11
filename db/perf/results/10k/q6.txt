@@ -1,0 +1,17 @@
+                                                              QUERY PLAN                                                               
+---------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=4.30..11.43 rows=1 width=72) (actual time=0.015..0.015 rows=1 loops=1)
+   Buffers: shared hit=3
+   ->  Bitmap Heap Scan on session_seat_prices  (cost=4.30..11.41 rows=3 width=14) (actual time=0.010..0.011 rows=3 loops=1)
+         Recheck Cond: (session_id = 324)
+         Heap Blocks: exact=1
+         Buffers: shared hit=3
+         ->  Bitmap Index Scan on session_seat_prices_pkey  (cost=0.00..4.30 rows=3 width=0) (actual time=0.004..0.004 rows=3 loops=1)
+               Index Cond: (session_id = 324)
+               Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.113 ms
+ Execution Time: 0.048 ms
+(13 rows)
+

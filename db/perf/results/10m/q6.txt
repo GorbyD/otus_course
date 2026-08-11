@@ -1,0 +1,13 @@
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=0.42..12.00 rows=1 width=72) (actual time=0.035..0.036 rows=1 loops=1)
+   Buffers: shared read=4
+   ->  Index Scan using session_seat_prices_pkey on session_seat_prices  (cost=0.42..11.97 rows=3 width=14) (actual time=0.031..0.031 rows=3 loops=1)
+         Index Cond: (session_id = 16579)
+         Buffers: shared read=4
+ Planning:
+   Buffers: shared hit=30 read=1
+ Planning Time: 0.296 ms
+ Execution Time: 0.055 ms
+(9 rows)
+

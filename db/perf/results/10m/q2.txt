@@ -1,0 +1,24 @@
+                                                                 QUERY PLAN                                                                  
+---------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=168714.91..168714.92 rows=1 width=8) (actual time=581.935..587.618 rows=1 loops=1)
+   Buffers: shared hit=2826 read=89980 written=18
+   ->  Gather  (cost=168714.69..168714.90 rows=2 width=8) (actual time=581.730..587.598 rows=3 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=2826 read=89980 written=18
+         ->  Partial Aggregate  (cost=167714.69..167714.70 rows=1 width=8) (actual time=567.421..567.422 rows=1 loops=3)
+               Buffers: shared hit=2826 read=89980 written=18
+               ->  Parallel Seq Scan on tickets  (cost=0.00..167387.89 rows=130720 width=0) (actual time=4.680..562.574 rows=102221 loops=3)
+                     Filter: (((status)::text = 'sold'::text) AND (purchased_at >= (now() - '7 days'::interval)))
+                     Rows Removed by Filter: 2881112
+                     Buffers: shared hit=2826 read=89980 written=18
+ Planning:
+   Buffers: shared hit=71 read=4
+ Planning Time: 0.585 ms
+ JIT:
+   Functions: 14
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+   Timing: Generation 1.449 ms (Deform 0.288 ms), Inlining 0.000 ms, Optimization 0.830 ms, Emission 13.131 ms, Total 15.410 ms
+ Execution Time: 603.322 ms
+(20 rows)
+
