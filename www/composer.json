@@ -13,6 +13,7 @@
   "require": {
     "php": ">=8.0",
     "denis/otus-util": "^1.0.0",
+    "ext-redis": "*",
     "elasticsearch/elasticsearch": "^8.0"
   },
   "config": {
