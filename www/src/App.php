@@ -1,5 +1,9 @@
 <?php
 
+use Cinema\Genre;
+use Cinema\Movie;
+use Cinema\MovieMapper;
+use Db\PdoFactory;
 use Events\Event;
 use Events\RedisClientFactory;
 use Events\RedisEventRepository;
@@ -20,6 +24,9 @@ class App
             '/mergelist' => $this->mergeList(),
             '/events' => $this->events(),
             '/events/match' => $this->eventsMatch(),
+            '/movies' => $this->movies(),
+            '/movies/show' => $this->movieShow(),
+            '/movies/genres' => $this->movieGenres(),
             default => $this->notFound(),
         };
     }
@@ -228,6 +235,85 @@ class App
         header('Content-Type: application/json; charset=utf-8');
         http_response_code(405);
         return json_encode(['error' => "Method Not Allowed. Допустимо: {$allowed}"], JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    private function movies(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $mapper = new MovieMapper(PdoFactory::createFromEnv());
+        $movies = $mapper->findAll();
+
+        http_response_code(200);
+        return json_encode(array_map(fn($movie) => $this->movieToArray($movie), $movies), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+    }
+
+    private function movieShow(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $movie = $this->findMovieOrNull();
+        if ($movie === null) {
+            return $this->movieNotFound();
+        }
+
+        http_response_code(200);
+        return json_encode($this->movieToArray($movie), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+    }
+
+    private function movieGenres(): string
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $movie = $this->findMovieOrNull();
+        if ($movie === null) {
+            return $this->movieNotFound();
+        }
+
+        $genres = $movie->getGenres();
+
+        http_response_code(200);
+        return json_encode([
+                'movie' => $movie->title,
+                'genres' => array_map(
+                    static fn (Genre $g) => ['id' => $g->id, 'name' => $g->name],
+                    $genres
+                ),
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+    }
+
+
+
+
+
+    private function findMovieOrNull(): ?Movie
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            return null;
+        }
+
+        $mapper = new MovieMapper(PdoFactory::createFromEnv());
+        return $mapper->findById($id);
+    }
+
+    private function movieNotFound(): string
+    {
+        http_response_code(404);
+        return json_encode(['error' => "Фильм не найден (проверьте параметр 'id')"], JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    private function movieToArray(Movie $movie): array
+    {
+        return [
+            'id' => $movie->id,
+            'title' => $movie->title,
+            'description' => $movie->description,
+            'durationMinutes' => $movie->durationMinutes,
+            'releaseDate' => $movie->releaseDate,
+            'ageRating' => $movie->ageRating,
+            'country' => $movie->country,
+        ];
     }
 
     private function mergeList(): string
