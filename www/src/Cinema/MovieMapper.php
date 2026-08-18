@@ -5,6 +5,8 @@ namespace Cinema;
 final class MovieMapper
 {
     private const BASE_COLUMNS = 'id, title, description, duration_minutes, release_date, age_rating, country';
+    private const DEFAULT_LIMIT = 50;
+    private const MAX_LIMIT = 200;
 
     private readonly IdentityMap $identityMap;
 
@@ -35,9 +37,15 @@ final class MovieMapper
     /**
      * @return Movie[]
      */
-    public function findAll(): array
+    public function findAll(int $limit = self::DEFAULT_LIMIT, int $offset = 0): array
     {
-        $stmt = $this->pdo->query('SELECT ' . self::BASE_COLUMNS . ' FROM movies ORDER BY id');
+        $limit = max(1, min($limit, self::MAX_LIMIT));
+        $offset = max(0, $offset);
+
+        $stmt = $this->pdo->prepare('SELECT ' . self::BASE_COLUMNS . ' FROM movies ORDER BY id LIMIT :limit OFFSET :offset');
+        $stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
 
         $movies = [];
         foreach ($stmt as $row) {
@@ -45,6 +53,35 @@ final class MovieMapper
         }
 
         return $movies;
+    }
+
+    /**
+     * @return \Generator<int, Movie>
+     */
+    public function findAllCursor(int $batchSize = 500): \Generator
+    {
+        $batchSize = max(1, $batchSize);
+        $lastId = 0;
+
+        $stmt = $this->pdo->prepare(
+            'SELECT ' . self::BASE_COLUMNS . ' FROM movies WHERE id > :last_id ORDER BY id LIMIT :limit'
+        );
+
+        while (true) {
+            $stmt->bindValue('last_id', $lastId, \PDO::PARAM_INT);
+            $stmt->bindValue('limit', $batchSize, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            if ($rows === []) {
+                return;
+            }
+
+            foreach ($rows as $row) {
+                yield $this->hydrate($row);
+                $lastId = (int) $row['id'];
+            }
+        }
     }
 
     private function hydrate(array $row): Movie

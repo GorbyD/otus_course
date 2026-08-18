@@ -241,8 +241,11 @@ class App
     {
         header('Content-Type: application/json; charset=utf-8');
 
+        $limit = (int) ($_GET['limit'] ?? 50);
+        $offset = (int) ($_GET['offset'] ?? 0);
+
         $mapper = new MovieMapper(PdoFactory::createFromEnv());
-        $movies = $mapper->findAll();
+        $movies = $mapper->findAll($limit, $offset);
 
         http_response_code(200);
         return json_encode(array_map(fn($movie) => $this->movieToArray($movie), $movies), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
