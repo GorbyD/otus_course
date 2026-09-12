@@ -11,9 +11,9 @@ final class Response
     ) {
     }
 
-    public static function text(string $body, int $status = 200): self
+    public static function text(string $body, int $status = 200, array $headers = []): self
     {
-        return new self($body, $status, []);
+        return new self($body, $status, $headers);
     }
 
     public static function json(array $data, int $status = 200, int $flags = JSON_UNESCAPED_UNICODE): self

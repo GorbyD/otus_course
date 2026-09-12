@@ -1,10 +1,16 @@
 <?php
 
+use Controller\FastFoodDemoController;
 use Controller\HealthcheckController;
+use FastFood\Decorator\RecipeApplier;
+use FastFood\Factory\BurgerFactory;
+use FastFood\Factory\HotDogFactory;
+use FastFood\Factory\SandwichFactory;
 use Health\MemcachedHealthCheck;
 use Health\PostgresHealthCheck;
 use Health\RedisHealthCheck;
 use Http\Request;
+use Http\Response;
 use Http\Router;
 
 /**
@@ -37,6 +43,17 @@ class App
             new RedisHealthCheck(),
             new MemcachedHealthCheck(),
         ]))->handle($r));
+
+        $router->get('/fastfood_pattern', function (Request $r): Response {
+            return (new FastFoodDemoController(
+                productFactories: [
+                    'burger' => new BurgerFactory(),
+                    'sandwich' => new SandwichFactory(),
+                    'hotdog' => new HotDogFactory(),
+                ],
+                recipeApplier: new RecipeApplier(),
+            ))->handle($r);
+        });
 
         // TODO реализовать остальные методы:
         // /bracket - post
