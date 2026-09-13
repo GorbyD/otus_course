@@ -11,6 +11,7 @@ use FastFood\Decorator\RecipeApplier;
 use FastFood\Factory\BurgerFactory;
 use FastFood\Factory\HotDogFactory;
 use FastFood\Factory\SandwichFactory;
+use FastFood\Kitchen\SystemClock;
 use Health\MemcachedHealthCheck;
 use Health\PostgresHealthCheck;
 use Health\RedisHealthCheck;
@@ -65,6 +66,7 @@ class App
                     disposal: $disposal,
                 ),
                 disposal: $disposal,
+                clock: new SystemClock(),
             ))->handle($r);
         });
 

@@ -10,6 +10,9 @@ use FastFood\Decorator\PepperTopping;
 use FastFood\Decorator\RecipeApplier;
 use FastFood\Decorator\SauceTopping;
 use FastFood\Factory\ProductFactoryInterface;
+use FastFood\Kitchen\ClockInterface;
+use FastFood\Kitchen\Ticket;
+use FastFood\Kitchen\TicketQueue;
 use FastFood\Order\ComboOrderItem;
 use FastFood\Order\SingleOrderItem;
 use FastFood\Product\ProductInterface;
@@ -27,6 +30,7 @@ final class FastFoodDemoController
         private readonly RecipeApplier $recipeApplier,
         private readonly CookInterface $cook,
         private readonly CollectingDisposal $disposal,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -99,6 +103,22 @@ final class FastFoodDemoController
         $combo = new ComboOrderItem(name: 'Комбо №1', items: [$burgerItem, $hotDog], discount: 20.0);
         $wholeOrder = new ComboOrderItem(name: 'Весь заказ', items: [$combo, $sandwich]);
         $out .= $wholeOrder->printReceipt();
+
+        $out .= "\n5. Итератор\n";
+        $queue = new TicketQueue($this->clock);
+        $now = $this->clock->now();
+        $queue->add(new Ticket(1, $sandwich, urgent: false, queuedAt: $now->modify('-2 minutes')));
+        $queue->add(new Ticket(2, $combo, urgent: false, queuedAt: $now->modify('-10 minutes')));
+        $queue->add(new Ticket(3, $wholeOrder, urgent: true, queuedAt: $now->modify('-1 minute')));
+
+        foreach ($queue as $ticket) {
+            $out .= sprintf(
+                "Тикет #%d%s — %d мин ожидания\n",
+                $ticket->id,
+                $ticket->urgent ? ' [СРОЧНО]' : '',
+                intdiv($ticket->waitSeconds($now), 60),
+            );
+        }
 
         return Response::text($out, 200, ['Content-Type' => 'text/plain; charset=utf-8']);
     }
