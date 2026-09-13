@@ -10,6 +10,8 @@ use FastFood\Decorator\PepperTopping;
 use FastFood\Decorator\RecipeApplier;
 use FastFood\Decorator\SauceTopping;
 use FastFood\Factory\ProductFactoryInterface;
+use FastFood\Order\ComboOrderItem;
+use FastFood\Order\SingleOrderItem;
 use FastFood\Product\ProductInterface;
 use Http\Request;
 use Http\Response;
@@ -89,7 +91,14 @@ final class FastFoodDemoController
             $out .= '  ' . $message . "\n";
         }
 
+        $out .= "\n4. Компоновщик\n";
+        $sandwich = new SingleOrderItem($this->productFactories['sandwich']->createProduct());
+        $hotDog = new SingleOrderItem($this->productFactories['hotdog']->createProduct());
+        $burgerItem = new SingleOrderItem($recipeBurger);
 
+        $combo = new ComboOrderItem(name: 'Комбо №1', items: [$burgerItem, $hotDog], discount: 20.0);
+        $wholeOrder = new ComboOrderItem(name: 'Весь заказ', items: [$combo, $sandwich]);
+        $out .= $wholeOrder->printReceipt();
 
         return Response::text($out, 200, ['Content-Type' => 'text/plain; charset=utf-8']);
     }
