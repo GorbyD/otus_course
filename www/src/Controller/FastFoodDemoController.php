@@ -10,11 +10,6 @@ use FastFood\Decorator\PepperTopping;
 use FastFood\Decorator\RecipeApplier;
 use FastFood\Decorator\SauceTopping;
 use FastFood\Factory\ProductFactoryInterface;
-use FastFood\Kitchen\ClockInterface;
-use FastFood\Kitchen\Ticket;
-use FastFood\Kitchen\TicketQueue;
-use FastFood\Order\ComboOrderItem;
-use FastFood\Order\SingleOrderItem;
 use FastFood\Product\ProductInterface;
 use Http\Request;
 use Http\Response;
@@ -28,6 +23,8 @@ final class FastFoodDemoController
     public function __construct(
         private readonly array $productFactories,
         private readonly RecipeApplier $recipeApplier,
+        private readonly CookInterface $cook,
+        private readonly CollectingDisposal $disposal,
     ) {
     }
 
@@ -80,6 +77,17 @@ final class FastFoodDemoController
             $customBurger->basePrice(),
             $customBurger->baseTimeMinutes(),
         );
+
+        $out .= "\n3. Прокси\n";
+        foreach ([$recipeBurger, $customBurger, $this->productFactories['hotdog']->createProduct()] as $toCook) {
+            $result = $this->cook->cook($toCook);
+            $out .= $result->isServed()
+                ? sprintf("Готово: клиенту выдан «%s»\n", $result->product?->name())
+                : sprintf("Отказ: %s\n", $result->reason);
+        }
+        foreach ($this->disposal->messages() as $message) {
+            $out .= '  ' . $message . "\n";
+        }
 
 
 

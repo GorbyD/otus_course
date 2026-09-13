@@ -2,6 +2,11 @@
 
 use Controller\FastFoodDemoController;
 use Controller\HealthcheckController;
+use FastFood\Cooking\CollectingDisposal;
+use FastFood\Cooking\Cook;
+use FastFood\Cooking\InMemoryIngredientStock;
+use FastFood\Cooking\MaxPrepTimeQualityStandard;
+use FastFood\Cooking\QualityControlCookProxy;
 use FastFood\Decorator\RecipeApplier;
 use FastFood\Factory\BurgerFactory;
 use FastFood\Factory\HotDogFactory;
@@ -45,6 +50,7 @@ class App
         ]))->handle($r));
 
         $router->get('/fastfood_pattern', function (Request $r): Response {
+            $disposal = new CollectingDisposal();
             return (new FastFoodDemoController(
                 productFactories: [
                     'burger' => new BurgerFactory(),
@@ -52,6 +58,13 @@ class App
                     'hotdog' => new HotDogFactory(),
                 ],
                 recipeApplier: new RecipeApplier(),
+                cook: new QualityControlCookProxy(
+                    realCook: new Cook(),
+                    stock: new InMemoryIngredientStock(outOfStockProductNames: ['Хот-дог']),
+                    qualityStandard: new MaxPrepTimeQualityStandard(maxMinutes: 8),
+                    disposal: $disposal,
+                ),
+                disposal: $disposal,
             ))->handle($r);
         });
 
