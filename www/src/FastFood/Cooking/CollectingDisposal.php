@@ -4,7 +4,7 @@ namespace FastFood\Cooking;
 
 use FastFood\Product\ProductInterface;
 
-final class CollectingDisposal implements DisposalInterface
+final class CollectingDisposal implements DisposalInterface, DisposalLogInterface
 {
     /** @var string[] */
     private array $messages = [];

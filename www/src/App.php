@@ -8,10 +8,13 @@ use FastFood\Cooking\InMemoryIngredientStock;
 use FastFood\Cooking\MaxPrepTimeQualityStandard;
 use FastFood\Cooking\QualityControlCookProxy;
 use FastFood\Decorator\RecipeApplier;
+use FastFood\Decorator\ToppingFactory;
 use FastFood\Factory\BurgerFactory;
 use FastFood\Factory\HotDogFactory;
 use FastFood\Factory\SandwichFactory;
 use FastFood\Kitchen\SystemClock;
+use FastFood\Kitchen\TicketFactory;
+use FastFood\Order\OrderItemFactory;
 use Health\MemcachedHealthCheck;
 use Health\PostgresHealthCheck;
 use Health\RedisHealthCheck;
@@ -52,21 +55,25 @@ class App
 
         $router->get('/fastfood_pattern', function (Request $r): Response {
             $disposal = new CollectingDisposal();
+            $clock = new SystemClock();
+
             return (new FastFoodDemoController(
                 productFactories: [
                     'burger' => new BurgerFactory(),
                     'sandwich' => new SandwichFactory(),
                     'hotdog' => new HotDogFactory(),
                 ],
-                recipeApplier: new RecipeApplier(),
+                recipeApplier: new RecipeApplier(new ToppingFactory()),
                 cook: new QualityControlCookProxy(
                     realCook: new Cook(),
                     stock: new InMemoryIngredientStock(outOfStockProductNames: ['Хот-дог']),
                     qualityStandard: new MaxPrepTimeQualityStandard(maxMinutes: 8),
                     disposal: $disposal,
                 ),
-                disposal: $disposal,
-                clock: new SystemClock(),
+                disposalLog: $disposal,
+                orderItemFactory: new OrderItemFactory(),
+                ticketFactory: new TicketFactory($clock),
+                clock: $clock,
             ))->handle($r);
         });
 

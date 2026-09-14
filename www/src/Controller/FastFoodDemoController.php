@@ -2,20 +2,15 @@
 
 namespace Controller;
 
-use FastFood\Cooking\CollectingDisposal;
 use FastFood\Cooking\CookInterface;
-use FastFood\Decorator\LettuceTopping;
-use FastFood\Decorator\OnionTopping;
-use FastFood\Decorator\PepperTopping;
+use FastFood\Cooking\DisposalLogInterface;
 use FastFood\Decorator\RecipeApplier;
-use FastFood\Decorator\SauceTopping;
+use FastFood\Decorator\ToppingChoice;
+use FastFood\Decorator\ToppingFactoryInterface;
 use FastFood\Factory\ProductFactoryInterface;
 use FastFood\Kitchen\ClockInterface;
-use FastFood\Kitchen\Ticket;
-use FastFood\Kitchen\TicketQueue;
-use FastFood\Order\ComboOrderItem;
-use FastFood\Order\SingleOrderItem;
-use FastFood\Product\ProductInterface;
+use FastFood\Kitchen\TicketFactoryInterface;
+use FastFood\Order\OrderItemFactoryInterface;
 use Http\Request;
 use Http\Response;
 
@@ -24,12 +19,16 @@ use Http\Response;
  */
 final class FastFoodDemoController
 {
-    /** @param array<string, ProductFactoryInterface> $productFactories */
+    /**
+     * @param array<string, ProductFactoryInterface> $productFactories
+     */
     public function __construct(
         private readonly array $productFactories,
         private readonly RecipeApplier $recipeApplier,
         private readonly CookInterface $cook,
-        private readonly CollectingDisposal $disposal,
+        private readonly DisposalLogInterface $disposalLog,
+        private readonly OrderItemFactoryInterface $orderItemFactory,
+        private readonly TicketFactoryInterface $ticketFactory,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -52,13 +51,13 @@ final class FastFoodDemoController
 
         $out .= "\n2. Декоратор\n";
 
-        $cheeseburgerRecipe = [
-            static fn (ProductInterface $p): ProductInterface => new OnionTopping($p),
-            static fn (ProductInterface $p): ProductInterface => new SauceTopping($p, 'сырный соус'),
+        $classicRecipe = [
+            new ToppingChoice(ToppingFactoryInterface::ONION),
+            new ToppingChoice(ToppingFactoryInterface::SAUCE, ['name' => 'сырный соус']),
         ];
         $recipeBurger = $this->recipeApplier->apply(
             $this->productFactories['burger']->createProduct(),
-            $cheeseburgerRecipe,
+            $classicRecipe,
         );
         $out .= sprintf(
             "Фикс. рецепт: %s — %.2f ₽ (%d мин)\n",
@@ -67,15 +66,15 @@ final class FastFoodDemoController
             $recipeBurger->baseTimeMinutes(),
         );
 
-        $customChoice = [
-            static fn (ProductInterface $p): ProductInterface => new LettuceTopping($p),
-            static fn (ProductInterface $p): ProductInterface => new PepperTopping($p),
-            static fn (ProductInterface $p): ProductInterface => new OnionTopping($p),
-            static fn (ProductInterface $p): ProductInterface => new SauceTopping($p, 'острый соус'),
+        $customRecipe = [
+            new ToppingChoice(ToppingFactoryInterface::LETTUCE),
+            new ToppingChoice(ToppingFactoryInterface::PEPPER),
+            new ToppingChoice(ToppingFactoryInterface::ONION),
+            new ToppingChoice(ToppingFactoryInterface::SAUCE, ['name' => 'острый соус']),
         ];
         $customBurger = $this->recipeApplier->apply(
             $this->productFactories['burger']->createProduct(),
-            $customChoice,
+            $customRecipe,
         );
         $out .= sprintf(
             "Свой набор:   %s — %.2f ₽ (%d мин)\n",
@@ -91,25 +90,25 @@ final class FastFoodDemoController
                 ? sprintf("Готово: клиенту выдан «%s»\n", $result->product?->name())
                 : sprintf("Отказ: %s\n", $result->reason);
         }
-        foreach ($this->disposal->messages() as $message) {
+        foreach ($this->disposalLog->messages() as $message) {
             $out .= '  ' . $message . "\n";
         }
 
         $out .= "\n4. Компоновщик\n";
-        $sandwich = new SingleOrderItem($this->productFactories['sandwich']->createProduct());
-        $hotDog = new SingleOrderItem($this->productFactories['hotdog']->createProduct());
-        $burgerItem = new SingleOrderItem($recipeBurger);
+        $sandwich = $this->orderItemFactory->single($this->productFactories['sandwich']->createProduct());
+        $hotDog = $this->orderItemFactory->single($this->productFactories['hotdog']->createProduct());
+        $burgerItem = $this->orderItemFactory->single($recipeBurger);
 
-        $combo = new ComboOrderItem(name: 'Комбо №1', items: [$burgerItem, $hotDog], discount: 20.0);
-        $wholeOrder = new ComboOrderItem(name: 'Весь заказ', items: [$combo, $sandwich]);
+        $combo = $this->orderItemFactory->combo('Комбо №1', [$burgerItem, $hotDog], 20.0);
+        $wholeOrder = $this->orderItemFactory->combo('Весь заказ', [$combo, $sandwich]);
         $out .= $wholeOrder->printReceipt();
 
         $out .= "\n5. Итератор\n";
-        $queue = new TicketQueue($this->clock);
+        $queue = $this->ticketFactory->createQueue();
         $now = $this->clock->now();
-        $queue->add(new Ticket(1, $sandwich, urgent: false, queuedAt: $now->modify('-2 minutes')));
-        $queue->add(new Ticket(2, $combo, urgent: false, queuedAt: $now->modify('-10 minutes')));
-        $queue->add(new Ticket(3, $wholeOrder, urgent: true, queuedAt: $now->modify('-1 minute')));
+        $queue->add($this->ticketFactory->createTicket(1, $sandwich, false, $now->modify('-2 minutes')));
+        $queue->add($this->ticketFactory->createTicket(2, $combo, false, $now->modify('-10 minutes')));
+        $queue->add($this->ticketFactory->createTicket(3, $wholeOrder, true, $now->modify('-1 minute')));
 
         foreach ($queue as $ticket) {
             $out .= sprintf(

@@ -9,13 +9,18 @@ use FastFood\Product\ProductInterface;
  */
 final class RecipeApplier
 {
+    public function __construct(
+        private readonly ToppingFactoryInterface $toppingFactory,
+    ) {
+    }
+
     /**
-     * @param list<callable(ProductInterface): ProductInterface> $toppings
+     * @param ToppingChoice[] $recipe
      */
-    public function apply(ProductInterface $product, array $toppings): ProductInterface
+    public function apply(ProductInterface $product, array $recipe): ProductInterface
     {
-        foreach ($toppings as $addTopping) {
-            $product = $addTopping($product);
+        foreach ($recipe as $choice) {
+            $product = $this->toppingFactory->getTopping($choice->type, $product, $choice->paramBag);
         }
 
         return $product;
