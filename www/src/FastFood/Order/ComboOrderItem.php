@@ -26,12 +26,12 @@ final class ComboOrderItem implements OrderItemInterface
 
     public function prepTimeMinutes(): int
     {
-        $max = 0;
+        $total = 0;
         foreach ($this->items as $item) {
-            $max = max($max, $item->prepTimeMinutes());
+            $total += $item->prepTimeMinutes();
         }
 
-        return $max;
+        return $total;
     }
 
     public function printReceipt(int $indent = 0): string
