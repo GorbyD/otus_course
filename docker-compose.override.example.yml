@@ -1,0 +1,81 @@
+services:
+
+  # ==========================================================
+  # В DEV балансировщик не нужен
+  # ==========================================================
+
+  nginx-lb:
+    profiles:
+      - disabled-in-dev
+
+  nginx-back2:
+    profiles:
+      - disabled-in-dev
+
+  php-fpm2:
+    profiles:
+      - disabled-in-dev
+
+  # ==========================================================
+  # Единственный nginx в DEV
+  # ==========================================================
+
+  nginx-back1:
+    ports:
+      - "80:80"
+
+  # ==========================================================
+  # Единственный PHP-FPM в DEV
+  # ==========================================================
+
+  php-fpm1:
+    build:
+      target: dev
+
+    volumes:
+      - ./www:/var/www/html
+
+    # SSH для PhpStorm.
+    ports:
+      - "127.0.0.1:2222:22"
+
+    # host.docker.internal (через host-gateway) здесь НЕ подходит:
+    # Docker Engine работает внутри WSL, а не в Docker Desktop, поэтому
+    # host-gateway резолвится в шлюз docker-бриджа (саму WSL-машину),
+    # а не в Windows, где слушает PhpStorm. Нужен реальный IP шлюза
+    # WSL -> Windows, узнать: `wsl -e sh -c "ip route | grep default"`.
+    # Значение изредка меняется после `wsl --shutdown`/перезагрузки
+    # Windows — если Xdebug перестанет коннектиться, обновите тут.
+    environment:
+      PHP_IDE_CONFIG: "serverName=otus-docker"
+      XDEBUG_CONFIG: "client_host=${XDEBUG_CLIENT_HOST} client_port=9003"
+
+    # В dev-контейнере должны одновременно работать:
+    # - sshd
+    # - php-fpm
+    #
+    # php-fpm остаётся foreground/main process.
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        ssh-keygen -A
+        /usr/sbin/sshd
+        exec php-fpm -F
+
+  # ==========================================================
+  # Сервисы, которые хотим видеть с хоста в DEV
+  # ==========================================================
+  redis:
+    ports:
+      - "6379:6379"
+
+  postgres:
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/db
+
+  elasticsearch:
+    ports:
+      - "9200:9200"
