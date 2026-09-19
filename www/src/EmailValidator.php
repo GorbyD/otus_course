@@ -4,6 +4,17 @@ class EmailValidator
 {
     private const PATTERN = '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/';
 
+    /** @var callable(string $domain): bool */
+    private $mxChecker;
+
+    /**
+     * @param callable(string $domain): bool|null $mxChecker для подмены проверки для тестов
+     */
+    public function __construct(?callable $mxChecker = null)
+    {
+        $this->mxChecker = $mxChecker ?? static fn (string $domain): bool => checkdnsrr($domain);
+    }
+
     public function isValidSyntax(string $email): bool
     {
         return preg_match(self::PATTERN, $email) === 1;
@@ -17,7 +28,7 @@ class EmailValidator
             return false;
         }
 
-        return checkdnsrr($domain);
+        return ($this->mxChecker)($domain);
     }
 
     public function isValid(string $email): bool
