@@ -1,5 +1,6 @@
 <?php
 
+use Controller\CheckEmailController;
 use Controller\FastFoodDemoController;
 use Controller\HealthcheckController;
 use FastFood\Cooking\CollectingDisposal;
@@ -77,9 +78,12 @@ class App
             ))->handle($r);
         });
 
+        $router->post('/checkemail', fn (Request $r) => (new CheckEmailController(
+            new EmailValidator(),
+        ))->handle($r));
+
         // TODO реализовать остальные методы:
         // /bracket - post
-        // /checkemail - post
         // /whoami - get
         // /mergelist - post
         // /events - post
