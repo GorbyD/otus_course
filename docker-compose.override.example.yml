@@ -79,3 +79,8 @@ services:
   elasticsearch:
     ports:
       - "9200:9200"
+
+  rabbitmq:
+    ports:
+      - "15672:15672"
+
