@@ -15,7 +15,8 @@
     "denis/otus-util": "^1.0.0",
     "ext-redis": "*",
     "elasticsearch/elasticsearch": "^8.0",
-    "php-amqplib/php-amqplib": "^3.7"
+    "php-amqplib/php-amqplib": "^3.7",
+    "symfony/mailer": "^6.4 || ^7.0"
   },
   "config": {
     "allow-plugins": {

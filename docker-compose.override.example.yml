@@ -84,3 +84,12 @@ services:
     ports:
       - "15672:15672"
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+  statement-worker:
+    depends_on:
+      mailpit:
+        condition: service_started
