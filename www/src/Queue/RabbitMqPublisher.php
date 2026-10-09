@@ -33,7 +33,6 @@ final class RabbitMqPublisher implements MessagePublisherInterface
             $channel->close();
             $connection->close();
         } catch (\Throwable $e) {
-            var_dump($e->getMessage());die;
             throw new QueueException('Не удалось поставить сообщение в очередь: ' . $e->getMessage(), 0, $e);
         }
     }
