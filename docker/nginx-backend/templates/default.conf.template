@@ -10,6 +10,11 @@ server {
         try_files $uri =404;
     }
 
+    # Slim-роутер для /tasks
+    location ^~ /tasks {
+        try_files $uri /api.php?$query_string;
+    }
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
