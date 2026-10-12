@@ -3,6 +3,7 @@
 use Controller\CheckEmailController;
 use Controller\FastFoodDemoController;
 use Controller\HealthcheckController;
+use Controller\StatementController;
 use FastFood\Cooking\CollectingDisposal;
 use FastFood\Cooking\Cook;
 use FastFood\Cooking\InMemoryIngredientStock;
@@ -22,6 +23,7 @@ use Health\RedisHealthCheck;
 use Http\Request;
 use Http\Response;
 use Http\Router;
+use Queue\RabbitMqPublisher;
 
 /**
  * Composition root: собирает маршруты и зависимости контроллеров,
@@ -81,6 +83,10 @@ class App
         $router->post('/checkemail', fn (Request $r) => (new CheckEmailController(
             new EmailValidator(),
         ))->handle($r));
+
+        $statementController = new StatementController(new EmailValidator(), new RabbitMqPublisher());
+        $router->get('/statement', fn (Request $r) => $statementController->form($r));
+        $router->post('/statement', fn (Request $r) => $statementController->submit($r));
 
         // TODO реализовать остальные методы:
         // /bracket - post

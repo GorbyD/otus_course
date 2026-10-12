@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_pgsql zip
+RUN docker-php-ext-install pdo_pgsql zip sockets
 
 RUN pecl install redis \
     && docker-php-ext-enable redis

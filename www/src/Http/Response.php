@@ -16,6 +16,11 @@ final class Response
         return new self($body, $status, $headers);
     }
 
+    public static function html(string $body, int $status = 200): self
+    {
+        return new self($body, $status, ['Content-Type' => 'text/html; charset=utf-8']);
+    }
+
     public static function json(array $data, int $status = 200, int $flags = JSON_UNESCAPED_UNICODE): self
     {
         return new self(

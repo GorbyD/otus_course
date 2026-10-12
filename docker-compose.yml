@@ -40,10 +40,14 @@ services:
       ES_HOST: ${ES_HOST}
       ES_PORT: ${ES_PORT}
       ES_INDEX: ${ES_INDEX}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     depends_on:
       - postgres
       - redis
       - elasticsearch
+      - rabbitmq
 
   # Back2
   nginx-back2:
@@ -74,10 +78,14 @@ services:
       ES_HOST: ${ES_HOST}
       ES_PORT: ${ES_PORT}
       ES_INDEX: ${ES_INDEX}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     depends_on:
       - postgres
       - redis
       - elasticsearch
+      - rabbitmq
 
   # Redis
   redis:
@@ -101,6 +109,39 @@ services:
   memcached:
     image: memcached:1.6-alpine
 
+  # Очередь сообщений
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Воркер для чтения очереди
+  statement-worker:
+    build:
+      context: ./docker/php
+    command: ["php", "/var/www/html/bin/statement-worker.php"]
+    restart: on-failure
+    volumes:
+      - ./www:/var/www/html:ro
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      MAILER_DSN: ${MAILER_DSN}
+      MAIL_FROM: ${MAIL_FROM}
+      STATEMENT_PROCESSING_DELAY: ${STATEMENT_PROCESSING_DELAY:-5}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
     environment:
@@ -113,3 +154,4 @@ services:
 volumes:
   redis-data:
   es-data:
+  rabbitmq-data:
