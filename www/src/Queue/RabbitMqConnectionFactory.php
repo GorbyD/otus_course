@@ -7,6 +7,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 final class RabbitMqConnectionFactory
 {
     public const QUEUE_STATEMENTS = 'statement_requests';
+    public const QUEUE_TASKS = 'task_requests';
 
     public static function createFromEnv(): AMQPStreamConnection
     {

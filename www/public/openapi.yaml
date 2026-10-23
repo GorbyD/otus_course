@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Task Queue API
+  description: >
+    REST API.
+    Клиент создаёт задачу через POST /tasks, получает её номер и опрашивает статус через GET /tasks/{id}, пока воркер обрабатывает задачу в фоне.
+  version: "1.0.0"
+paths:
+  /tasks:
+    post:
+      summary: Поставить задачу в очередь на обработку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+            examples:
+              uppercase:
+                value:
+                  type: uppercase
+                  payload:
+                    value: hello world
+              reverse:
+                value:
+                  type: reverse
+                  payload:
+                    value: hello world
+              sum:
+                value:
+                  type: sum
+                  payload:
+                    numbers: [1, 2, 3, 4.5]
+      responses:
+        '202':
+          description: Задача принята и поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Очередь временно недоступна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /tasks/{id}:
+    get:
+      summary: Проверить статус задачи
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Номер задачи, полученный при создании
+      responses:
+        '200':
+          description: Текущее состояние задачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Задача с таким id не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    TaskCreateRequest:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          enum: [uppercase, reverse, sum]
+          description: Тип обработки задачи
+        payload:
+          type: object
+          description: >
+            Для uppercase/reverse: {"value": "строка"}.
+            Для sum: {"numbers": [1, 2, 3]}.
+    TaskAccepted:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          example: pending
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          example: uppercase
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          example: completed
+        result:
+          type: object
+          nullable: true
+          example:
+            value: HELLO WORLD
+        error:
+          type: string
+          nullable: true
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

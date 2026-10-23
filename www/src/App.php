@@ -88,6 +88,8 @@ class App
         $router->get('/statement', fn (Request $r) => $statementController->form($r));
         $router->post('/statement', fn (Request $r) => $statementController->submit($r));
 
+        // /tasks и /tasks/{id} в отдельном Slim-роутере, см. public/api.php
+
         // TODO реализовать остальные методы:
         // /bracket - post
         // /whoami - get

@@ -142,6 +142,26 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  # Воркер для задач API
+  task-worker:
+    build:
+      context: ./docker/php
+    command: ["php", "/var/www/html/bin/task-worker.php"]
+    restart: on-failure
+    volumes:
+      - ./www:/var/www/html:ro
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
     environment:
