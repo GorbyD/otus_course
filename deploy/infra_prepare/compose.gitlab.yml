@@ -1,0 +1,26 @@
+# Подготовка gitlab
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    restart: unless-stopped
+    hostname: gitlab
+    shm_size: 256m
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://192.168.1.110:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        registry_external_url 'http://192.168.1.110:5050'
+    ports:
+      - '8929:8929'
+      - '2224:22'
+      - '5050:5050'
+    volumes:
+      - ./gitlab/config:/etc/gitlab
+      - ./gitlab/logs:/var/log/gitlab
+      - ./gitlab/data:/var/opt/gitlab
+  runner:
+    image: gitlab/gitlab-runner:alpine
+    restart: unless-stopped
+    volumes:
+      - ./runner:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock

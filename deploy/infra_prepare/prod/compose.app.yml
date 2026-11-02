@@ -1,0 +1,55 @@
+# шаблон приложения, запускаемый с -p otus-blue или -p otus-green. #
+# SLOT и IMAGE_TAG задаёт deploy.sh через export
+x-app: &app
+  image: ${IMAGE_PREFIX:-otus-app}/php:${IMAGE_TAG:?set IMAGE_TAG}
+  restart: unless-stopped
+  env_file: ${DEPLOY_DIR}/.env
+  # PHP ожидает PG_*, PostgreSQL — POSTGRES_*. Значения храним в .env один раз.
+  environment:
+    PG_HOST: postgres
+    PG_DB: ${POSTGRES_DB}
+    PG_USER: ${POSTGRES_USER}
+    PG_PASSWORD: ${POSTGRES_PASSWORD}
+  networks: [production]
+  stop_grace_period: 30s
+
+services:
+  php:
+    <<: *app
+    stop_signal: SIGQUIT
+    networks:
+      production:
+        aliases: ["otus-${SLOT:?set SLOT}-php"]
+    healthcheck:
+      test: [CMD, php, -r, "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  web:
+    image: ${IMAGE_PREFIX:-otus-app}/web:${IMAGE_TAG:?set IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      PHP_FPM_HOST: otus-${SLOT:?set SLOT}-php
+    depends_on:
+      php:
+        condition: service_healthy
+    networks:
+      production:
+        # для nginx конфига в deploy.sh
+        aliases: ["otus-${SLOT:?set SLOT}-web"]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/healthz]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  statement-worker:
+    <<: *app
+    command: [php, /var/www/html/bin/statement-worker.php]
+  task-worker:
+    <<: *app
+    command: [php, /var/www/html/bin/task-worker.php]
+
+networks:
+  production:
+    external: true
+    name: otus-delivery

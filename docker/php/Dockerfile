@@ -62,3 +62,24 @@ RUN printf '%s\n' \
 # ============================================================
 
 FROM base AS prod
+
+WORKDIR /var/www/html
+
+# Код приложения в "app"
+COPY --from=app composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+
+COPY --from=app src/ ./src/
+COPY --from=app public/ ./public/
+COPY --from=app bin/ ./bin/
+RUN composer dump-autoload --no-dev --optimize
+
+# Dev-зависимости и тесты остаются вне production-образа.
+FROM prod AS test
+RUN composer install --no-interaction --prefer-dist
+COPY --from=app tests/ ./tests/
+COPY --from=app phpunit.xml ./phpunit.xml
+CMD ["vendor/bin/phpunit"]
+
+# Сборка без --target по-прежнему даёт production с php-fpm.
+FROM prod AS production
